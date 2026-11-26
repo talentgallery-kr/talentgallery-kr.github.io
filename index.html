@@ -475,12 +475,7 @@ textarea { border: 0; }
 </main>
 
 <footer class="notice">
-  <p>진단이 아닌 참고용이에요 · 기록은 이 기기에만 저장돼요 · 마음이 많이 힘들면 <b>109</b></p>
-  <details><summary>자세히</summary>
-    <p>강점을 바탕으로 한 경향과 제안이에요. 자살예방 상담전화 <b>109</b>(24시간), 정신건강 위기상담 <b>1577-0199</b>.</p>
-    <p>입력한 순위와 이름은 이 브라우저에만 저장되고 서버로 보내지 않아요. 결과 사진도 이 기기 안에서만 읽어요. <button class="link" id="wipe">이 브라우저의 기록 모두 지우기</button></p>
-    <p class="legend">출처 표시: <span class="src src-gallup">G</span>갤럽34 원문 <span class="src src-note">N</span>운영자 노트 <span class="src src-psych">P</span>심리학 이론 <span class="src src-web">W</span>웹 자료 <span class="src src-draft">D</span>초안·검토 중</p>
-  </details>
+  <p><button class="link small" id="wipe">이 브라우저의 기록 지우기</button></p>
 </footer>
 <script>
 // 운영자의 갤럽34 원문 (자동 변환, 내용 수정 없음)
@@ -699,8 +694,8 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const SRC = { gallup: "갤럽34 원문", note: "운영자 노트", psych: "심리학 이론", web: "웹 자료", draft: "초안·검토 중" };
 const LETTER = { gallup: "G", note: "N", psych: "P", web: "W", draft: "D" };
-// 출처 표시는 작은 글자 하나로 (뜻은 아래 '자세히'와 출처 탭에 있음)
-const badge = (k) => `<span class="src src-${k}" title="출처: ${SRC[k]}" aria-label="출처 ${SRC[k]}">${LETTER[k]}</span>`;
+// 출처 표시(배지)는 최종본에서 화면에 내지 않음 (운영자 결정 2026-11-26). 자료 구분은 데이터·문서에만 남김
+const badge = () => "";
 const ul = (a = []) => `<ul>${a.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
 const dom = (n) => G[n].domain;
 const chip = (n) => `<span class="tchip d-${dom(n)}">${esc(n)}</span>`;
@@ -1086,7 +1081,7 @@ function renderAnswer() {
         ${psych ? `<h4>${esc(C.PSYCH[psych].title)} ${badge("psych")}</h4><p class="small">${esc(C.PSYCH[psych].body)}</p>` : ""}
         <h4>더 물어보기 ${badge("draft")}</h4><ol>${C.REFLECT[area].slice(1).map((x) => `<li>${esc(x)}</li>`).join("")}</ol>
       </details>
-      <p class="small muted">진단이나 상담을 대신하지 않아요.</p></div>`;
+      </div>`;
 }
 
 // '아하' 체크
@@ -1211,12 +1206,11 @@ function tabSave() {
 
 // ---- 출처 탭 ----
 function tabSrc() {
-  $("t-src").innerHTML = `<div class="card"><h3>내용의 출처</h3>
-    <p>${badge("gallup")} 운영자가 정리한 갤럽 클리프턴스트렝스 34테마 자료(기여·욕구·맹점·관리)예요. 이 사이트의 바탕이며 문장을 고치지 않았어요.</p>
-    <p>${badge("note")} 운영자의 니즈 노트예요. 핵심 욕구, 동기를 살리는 법, 피할 것.</p>
-    <p>${badge("psych")} 애착 이론, 귀인 이론(자기 위주 편향 포함), 통제 소재, Cialdini 설득 원칙을 운영자 노트에서 쉽게 요약했어요. 진단 도구가 아니에요. 이 사이트는 갤럽 결과로 MBTI 등 다른 검사 결과를 추측하지 않아요.</p>
-    <p>${badge("draft")} 실천 제안, 상황별 연결, 스스로 묻는 질문, 영역 균형 문장, 부딪힐 수 있는 조합은 원문을 바탕으로 새로 쓴 초안이라 검토 중이에요.</p>
-    <h4>${badge("web")} 웹 자료</h4><ul>${Object.values(C.WEB).map((w) => `<li><a href="${w.url}" target="_blank" rel="noopener">${esc(w.title)}</a><br><span class="small">${esc(w.summary)}</span></li>`).join("")}</ul>
+  $("t-src").innerHTML = `<div class="card"><h3>참고한 자료</h3>
+    <p>갤럽 클리프턴스트렝스 34테마 자료(기여·욕구·맹점·관리)를 바탕으로 했어요. 34테마 문장은 고치지 않았어요.</p>
+    <p>핵심 욕구, 동기를 살리는 법, 피할 것은 운영자의 노트예요.</p>
+    <p>애착 이론, 귀인 이론, 통제 소재, Cialdini 설득 원칙을 쉽게 요약해 함께 담았어요.</p>
+    <h4>웹 자료</h4><ul>${Object.values(C.WEB).map((w) => `<li><a href="${w.url}" target="_blank" rel="noopener">${esc(w.title)}</a><br><span class="small">${esc(w.summary)}</span></li>`).join("")}</ul>
     <p class="muted small">CliftonStrengths와 34개 테마 이름은 Gallup의 상표예요. 이 사이트는 Gallup과 관계없는 개인 학습용 도구예요.</p></div>`;
 }
 
