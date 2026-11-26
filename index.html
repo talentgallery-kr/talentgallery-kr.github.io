@@ -1037,7 +1037,16 @@ function myPatterns(r) {
     // 세 테마의 평균 순위 비중 (높은 순위끼리 맞물린 조합이 위로)
     const score = picks.reduce((a, n) => a + W(top.indexOf(n)), 0) / picks.length;
     return { ...p, picks, score };
-  }).filter(Boolean).sort((a, b) => b.score - a.score || a.picks.reduce((x, n) => x + top.indexOf(n), 0) - b.picks.reduce((x, n) => x + top.indexOf(n), 0));
+  }).filter(Boolean).sort((a, b) => b.score - a.score || a.picks.reduce((x, n) => x + top.indexOf(n), 0) - b.picks.reduce((x, n) => x + top.indexOf(n), 0))
+    // 같은 세 테마 조합은 점수가 가장 높은 하나만
+    .filter((p, i, all) => all.findIndex((q) => [...q.picks].sort().join() === [...p.picks].sort().join()) === i);
+}
+// 위에 보여 줄 조합: 앞서 고른 조합과 겹치는 테마가 1개 이하인 것부터 (다양하게)
+function diversePatterns(list, k = 3) {
+  const out = [];
+  for (const p of list) { if (out.length >= k) break; if (out.every((q) => q.picks.filter((n) => p.picks.includes(n)).length <= 1)) out.push(p); }
+  for (const p of list) { if (out.length >= k) break; if (!out.includes(p)) out.push(p); }
+  return [...out, ...list.filter((p) => !out.includes(p))];
 }
 function myTensions(prof) {
   const sum = (l) => l.reduce((a, [, w]) => a + w, 0);
@@ -1048,7 +1057,7 @@ function comboCards(r) {
   const strong = prof.slice().sort((a, b) => Math.abs(b.v) - Math.abs(a.v)).slice(0, 3);
   const pole = (a) => a.k + (a.v >= 0 ? "+" : "-"), word = (a) => (a.v >= 0 ? a.plus : a.minus);
   const typeName = `${word(strong[1])} ${C.POLES[pole(strong[0])].noun}`;
-  const pats = myPatterns(r), ten = myTensions(prof);
+  const pats = diversePatterns(myPatterns(r)), ten = myTensions(prof);
   const chips = (l) => l.sort((a, b) => b[1] - a[1]).slice(0, 2).map(([n]) => chip(n)).join(" ");
   const bar = (a) => { const pct = Math.min(50, Math.round((Math.abs(a.v) / 1.2) * 50)); return `<div class="axis"><span class="${a.v < 0 ? "on" : ""}">${a.minus}</span><i><b style="${a.v >= 0 ? "left:50%" : `left:${50 - pct}%`};width:${pct}%"></b></i><span class="${a.v >= 0 ? "on" : ""}">${a.plus}</span></div>`; };
   return `<div class="card combo"><p class="kicker">02 — how you run</p>
@@ -1095,24 +1104,22 @@ function synthesis(r) {
 function tabSol() {
   const r = me.rank;
   const d0 = domOrder(r)[0];
-  const { comp, fr } = pairsWithin(r, r, true);
+  const { fr } = pairsWithin(r, r, true);
+  // 영역을 번갈아 가며 Top 10을 한 번씩 (같은 테마 반복 방지)
+  const byDom = domOrder(r).map((d) => inDom(r, d)), spread = [];
+  for (let k = 0; spread.length < Math.min(10, r.length); k++) byDom.forEach((l) => l[k] && spread.push(l[k]));
   $("t-sol").innerHTML = synthesis(r) + comboCards(r) + `
     <div class="card d-${d0}"><p class="kicker">05 — where you work best</p>
       <h3><span class="motif hl">${d0}</span> ${esc(DI(d0).op)} ${badge("note")}</h3>
       <ul class="lines">${DI(d0).works.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
     <div class="card"><p class="kicker">06 — try this week ${badge("draft")}</p><div id="sol-act"></div></div>
     <div class="card"><p class="kicker">07 — watch out ${badge("gallup")}</p>
-      <ul class="lines">${r.slice(0, 3).map((n) => `<li>${esc(G[n].blindspots[0])} ${chip(n)}</li>`).join("")}</ul>
-      <p class="small muted">고칠 결점이 아니라 조절할 다이얼이에요.</p>
-      <details class="more"><summary>조합 · 피할 것 · 3단계 더 보기</summary>
-        ${comp.length ? `<h4>서로 채워 주는 조합 ${badge("gallup")}</h4><ul>${comp.slice(0, 4).map(([x, y]) => `<li>${chip(x)} + ${chip(y)}</li>`).join("")}</ul>` : ""}
-        ${fr.length ? `<h4>안에서 당길 수 있는 조합 ${badge("draft")}</h4><ul>${fr.map(([x, y, w, tip]) => `<li>${chip(x)} ↔ ${chip(y)} ${esc(tip)}</li>`).join("")}</ul>` : ""}
-        <h4>지치지 않게 피할 것 ${badge("note")}</h4><ul>${r.slice(0, 3).map((n) => `<li>${esc(G[n].avoid[0])} ${chip(n)}</li>`).join("")}</ul>
-        <h4>강점을 쓰는 3단계 ${badge("web")}</h4>
-        <div class="step"><span class="n">1</span><p>위 문장 중 가장 나 같은 것에 이름 붙이기</p></div>
-        <div class="step"><span class="n">2</span><p>${chip(r[0])}이(가) 도움 됐던 최근 순간 떠올리기</p></div>
-        <div class="step"><span class="n">3</span><p>내일 ${chip(r[0])}을(를) 일부러 써 볼 장면 정하기</p></div>
-      </details></div>`;
+      <h3>Top 10 맹점 지도</h3>
+      <p class="small muted">10개 테마를 영역별로 번갈아 골라, 테마마다 한 번씩만 짚었어요. 고칠 결점이 아니라 조절할 다이얼이에요.</p>
+      <ul class="lines">${spread.slice(0, 6).map((n) => `<li>${esc(G[n].blindspots[0])} ${chip(n)}</li>`).join("")}</ul>
+      ${spread.length > 6 ? `<h4>지치지 않게 피할 것</h4><ul class="lines">${spread.slice(6).map((n) => `<li>${esc(G[n].avoid[0])} ${chip(n)}</li>`).join("")}</ul>` : ""}
+      ${fr.length ? `<details class="more"><summary>안에서 당길 수 있는 조합</summary><ul>${fr.map(([x, y, w, tip]) => `<li>${chip(x)} ↔ ${chip(y)} ${esc(tip)}</li>`).join("")}</ul></details>` : ""}
+    </div>`;
   tabAct();
 }
 
