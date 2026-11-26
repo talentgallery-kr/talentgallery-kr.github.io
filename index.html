@@ -1233,17 +1233,19 @@ document.addEventListener("click", (e) => {
 
 // ---- 실천 탭 ----
 let area = "업무";
-// 흐름 순서(받아들이기 → 잇기 → 알리기 → 끝내기)로 영역별 대표 테마. 3개가 안 되면 높은 순위로 채움
-function weekFlow(r) {
-  const lead = C.FLOW.map(([d]) => inDom(r, d)[0]).filter(Boolean);
-  const extra = r.slice(0, 10).filter((n) => !lead.includes(n)).slice(0, Math.max(0, 3 - lead.length));
-  return C.FLOW.flatMap(([d]) => [...lead, ...extra].filter((n) => dom(n) === d).sort((x, y) => r.indexOf(x) - r.indexOf(y)));
+// 흐름 순서(받아들이기 → 잇기 → 알리기 → 끝내기)로 영역마다 한 테마씩.
+// 분야(진로·업무·대인관계·학습·휴식)마다 영역 안에서 다음 순위 테마로 돌아가며 골라, 같은 테마만 반복되지 않게 함
+function weekFlow(r, ai = 0) {
+  const lists = C.FLOW.map(([d]) => inDom(r, d)).filter((l) => l.length);
+  const pick = lists.map((l) => l[ai % l.length]);
+  for (let k = 1; pick.length < 3 && k < 10; k++) lists.forEach((l) => { const n = l[(ai + k) % l.length]; if (pick.length < 3 && !pick.includes(n)) pick.push(n); });
+  return C.FLOW.flatMap(([d]) => pick.filter((n) => dom(n) === d));
 }
 function tabAct() {
   const i = C.AREAS.indexOf(area);
   $("sol-act").innerHTML = `<div class="seg">${C.AREAS.map((a) => `<button data-area="${a}" class="${a === area ? "on" : ""}">${a}</button>`).join("")}</div>
     <p class="small muted">${esc(area)}에서 한 가지를 정하고, 내 강점을 이 순서로 이어 써 보세요.</p>
-    <ol class="acts lines">${weekFlow(me.rank).map((n) => `<li>${esc(C.ACTIONS[n][i])} ${chip(n)}</li>`).join("")}</ol>
+    <ol class="acts lines">${weekFlow(me.rank, i).map((n) => `<li>${esc(C.ACTIONS[n][i])} ${chip(n)}</li>`).join("")}</ol>
     <details class="more"><summary>테마별 제안 (1~10위)</summary><ol class="acts light">${me.rank.slice(0, 10).map((n) => `<li>${esc(C.ACTIONS[n][i])} ${chip(n)}</li>`).join("")}</ol></details>`;
   $("sol-act").querySelector(".seg").onclick = (e) => { const b = e.target.closest("button"); if (b) { area = b.dataset.area; tabAct(); } };
 }
