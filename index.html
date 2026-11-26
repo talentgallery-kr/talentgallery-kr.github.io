@@ -472,7 +472,7 @@ textarea { border: 0; }
       <button data-t="top" class="on">Top 10</button>
       <button data-t="read">요약</button>
       <button data-t="sol">솔루션</button>
-      <button data-t="ask">고민</button>
+      <!-- 고민 탭은 숨김 (2026-11-26, 규칙만으로는 답 품질 보장이 어려움. 코드는 app.js에 보존) -->
       <button data-t="fit">직군</button>
       <button data-t="cmp">비교</button>
       <button data-t="save">저장·공유</button>
@@ -960,7 +960,7 @@ function tabRead() {
       <div class="dbar">${DOMAINS.map((d) => p[d] ? `<span class="d-${d}" style="flex:${p[d]}"></span>` : "").join("")}</div>
       ${domOrder(r).map((d) => `<div class="drow d-${d}"><b class="motif">${d}</b><span class="pct">${p[d]}%</span><span class="op">${esc(DI(d).op)}</span></div>`).join("")}
       <p class="small muted">Top 10 안의 테마 개수 기준이에요 (1개 = 10%).</p></div>
-    <div class="card gos"><button class="go" data-go="top">Top 10 하나씩</button><button class="go" data-go="sol">종합 솔루션</button><button class="go" data-go="ask">고민별 해결책</button></div>`;
+    <div class="card gos"><button class="go" data-go="top">Top 10 하나씩</button><button class="go" data-go="sol">종합 솔루션</button></div>`;
 }
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-go]"); if (b) { openTab(b.dataset.go); window.scrollTo({ top: $("tabs").offsetTop - 4 }); } });
 
